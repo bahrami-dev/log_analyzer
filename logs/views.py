@@ -1,10 +1,17 @@
 import os
 import re
 import datetime
+import uuid
+import logging
 
+from django.core.files import File
 from django.http import HttpResponse
 
-from .models import NginxLog
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.parsers import MultiPartParser
+
+from .models import LogFile, NginxLog
 
 
 # Define Django project base directory
@@ -62,3 +69,26 @@ def parser(request):
                 )
     
     return HttpResponse('Done!')
+
+
+class FileUploadView(APIView):
+    parser_classes = (MultiPartParser,)
+
+    def post(self, request):
+        # Get the file from the request.
+        file = request.FILES['file']
+        name = uuid.uuid4().hex
+        # Save the file to the database.
+        try:
+            myfile = File(file)
+            log_file = LogFile(
+                name=name,
+                original_name=file.name,
+                file=myfile, 
+                size=file.size,
+            )
+            log_file.save()
+            return Response({'message': 'File uploaded successfully.'})
+        except Exception as e:
+            logging.exception(e)
+            return Response({'message': 'Uploading Faild.'})

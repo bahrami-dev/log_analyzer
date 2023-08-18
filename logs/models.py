@@ -1,5 +1,13 @@
 from django.db import models
 
+
+class LogFile(models.Model):
+    name =  models.CharField(max_length=256, unique=True)
+    original_name = models.CharField(max_length=256)
+    file = models.FileField(upload_to="logs")
+    size = models.BigIntegerField()
+    upload_date = models.DateTimeField(auto_now_add=True)
+
 class NginxLog(models.Model):
     ip_address = models.CharField(max_length=32)
     remote_user = models.CharField(max_length=128)
