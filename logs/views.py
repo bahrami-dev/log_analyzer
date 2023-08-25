@@ -16,13 +16,13 @@ from .models import LogFile, NginxLog
 
 # Define Django project base directory
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-# Define text file name
-filename = 'access.log'
-# Define the full file path
-# filepath = BASE_DIR + '/static_cdn/media_root/resume/' + filename
-filepath = BASE_DIR + '/static/log/' + filename
 
-def parser(request):
+# Define the full file path
+last_model_instance = LogFile.objects.last()
+last_file_name = last_model_instance.file.name
+filepath = BASE_DIR + '/media/' + last_file_name
+
+def parser():
 
     # Open the log file
     with open(filepath, 'r') as f:
@@ -88,6 +88,7 @@ class FileUploadView(APIView):
                 size=file.size,
             )
             log_file.save()
+            parser()
             return Response({'message': 'File uploaded successfully.'})
         except Exception as e:
             logging.exception(e)
