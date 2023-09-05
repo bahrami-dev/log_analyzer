@@ -10,19 +10,18 @@ from django.http import HttpResponse
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser
+from rest_framework import generics
 
 from .models import LogFile, NginxLog
 
+from .serializers import NginxLogSerializer
 
 # Define Django project base directory
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-# Define the full file path
-last_model_instance = LogFile.objects.last()
-last_file_name = last_model_instance.file.name
-filepath = BASE_DIR + '/media/' + last_file_name
 
-def parser():
+
+def parser(filepath, log_file):
 
     # Open the log file
     with open(filepath, 'r') as f:
@@ -66,6 +65,7 @@ def parser():
                     size_of_response_body = size_of_response_body,
                     referrer_url = referrer_url,
                     user_agent = user_agent,
+                    log_file=log_file
                 )
     
     return HttpResponse('Done!')
@@ -88,8 +88,17 @@ class FileUploadView(APIView):
                 size=file.size,
             )
             log_file.save()
-            parser()
+
+            # Define the full file path
+            filepath = BASE_DIR + '/media/' + log_file.file.name
+
+            parser(filepath, log_file)
             return Response({'message': 'File uploaded successfully.'})
         except Exception as e:
             logging.exception(e)
             return Response({'message': 'Uploading Faild.'})
+        
+
+class StatusCodeList(generics.ListAPIView):
+    queryset = NginxLog.objects.all()
+    serializer_class = NginxLogSerializer
