@@ -99,6 +99,21 @@ class FileUploadView(APIView):
             return Response({'message': 'Uploading Faild.'})
         
 
-class StatusCodeList(generics.ListAPIView):
-    queryset = NginxLog.objects.all()
+class Statistics(generics.ListAPIView):
     serializer_class = NginxLogSerializer
+
+    def get_queryset(self):
+        queryset = NginxLog.objects.all()
+        id = int(self.kwargs['id'])
+        key = self.request.query_params.get("key")
+        value = self.request.query_params.get("value")
+        if key is not None and value is not None:
+            kwargs = {
+                'log_file_id': id,
+                '{0}'.format(key): '{0}'.format(value),
+            }
+            queryset = queryset.filter(**kwargs)
+        else:
+            queryset = queryset.filter(log_file_id=id)
+
+        return queryset

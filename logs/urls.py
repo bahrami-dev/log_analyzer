@@ -1,8 +1,8 @@
 from django.urls import path
 
-from .views import FileUploadView, StatusCodeList
+from .views import FileUploadView, Statistics
 
 urlpatterns = [
     path('upload', FileUploadView.as_view(), name='upload'),
-    path('', StatusCodeList.as_view(), name='status_code')
+    path('<id>/statistics', Statistics.as_view(), name='statistics')
 ]
