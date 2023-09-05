@@ -19,4 +19,4 @@ class NginxLog(models.Model):
     size_of_response_body = models.BigIntegerField()
     referrer_url = models.TextField()
     user_agent = models.TextField()
-
+    log_file = models.ForeignKey(LogFile, related_name='nginx_logs', on_delete=models.CASCADE)
