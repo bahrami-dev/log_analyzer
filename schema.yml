@@ -1,0 +1,144 @@
+openapi: 3.0.3
+info:
+  title: Log Analyzer API
+  version: 1.0.0
+  description: An NginX log analyzer
+paths:
+  /api/v1/logs/{id}/statistics:
+    get:
+      operationId: statistics_list
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - statistics
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/NginxLog'
+          description: ''
+  /api/v1/logs/upload:
+    post:
+      operationId: upload_create
+      tags:
+      - upload
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LogFile'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LogFile'
+          description: ''
+components:
+  schemas:
+    LogFile:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 256
+        original_name:
+          type: string
+          maxLength: 256
+        file:
+          type: string
+          format: uri
+        size:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: -9223372036854775808
+          format: int64
+        upload_date:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - file
+      - id
+      - name
+      - original_name
+      - size
+      - upload_date
+    NginxLog:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        ip_address:
+          type: string
+          maxLength: 32
+        remote_user:
+          type: string
+          maxLength: 128
+        date_time:
+          type: string
+          format: date-time
+        request_method:
+          type: string
+          maxLength: 20
+        request_url:
+          type: string
+        protocol:
+          type: string
+          maxLength: 20
+        status_code:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+        size_of_response_body:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: -9223372036854775808
+          format: int64
+        referrer_url:
+          type: string
+        user_agent:
+          type: string
+        log_file:
+          type: integer
+      required:
+      - date_time
+      - id
+      - ip_address
+      - log_file
+      - protocol
+      - referrer_url
+      - remote_user
+      - request_method
+      - request_url
+      - size_of_response_body
+      - status_code
+      - user_agent
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid

@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     # Third Party Apps
     'rest_framework',
+    'drf_spectacular',
     # Local Apps
     'accounts.apps.AccountsConfig',
     'logs.apps.LogsConfig',
@@ -140,3 +141,13 @@ MEDIA_ROOT = BASE_DIR / 'media'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'accounts.CustomUser'
+
+REST_FRAMEWORK = {
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema'
+}
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Log Analyzer API',
+    'DESCRIPTION': 'An NginX log analyzer',
+    'VERSION': '1.0.0'
+}

@@ -11,10 +11,11 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser
 from rest_framework import generics
+from rest_framework import status
 
 from .models import LogFile, NginxLog
 
-from .serializers import NginxLogSerializer
+from .serializers import NginxLogSerializer, LogFileSerializer
 
 # Define Django project base directory
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -73,6 +74,7 @@ def parser(filepath, log_file):
 
 class FileUploadView(APIView):
     parser_classes = (MultiPartParser,)
+    serializer_class = LogFileSerializer
 
     def post(self, request):
         # Get the file from the request.
@@ -81,19 +83,19 @@ class FileUploadView(APIView):
         # Save the file to the database.
         try:
             myfile = File(file)
-            log_file = LogFile(
+            log_file = LogFile.objects.create(
                 name=name,
                 original_name=file.name,
                 file=myfile, 
                 size=file.size,
             )
-            log_file.save()
 
             # Define the full file path
             filepath = BASE_DIR + '/media/' + log_file.file.name
 
             parser(filepath, log_file)
-            return Response({'message': 'File uploaded successfully.'})
+            data = LogFileSerializer(log_file).data
+            return Response(data)
         except Exception as e:
             logging.exception(e)
             return Response({'message': 'Uploading Faild.'})
@@ -104,7 +106,7 @@ class Statistics(generics.ListAPIView):
 
     def get_queryset(self):
         queryset = NginxLog.objects.all()
-        id = int(self.kwargs['id'])
+        id = self.kwargs['id']
         key = self.request.query_params.get("key")
         value = self.request.query_params.get("value")
         if key is not None and value is not None:
