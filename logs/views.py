@@ -11,7 +11,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser
 from rest_framework import generics
-from rest_framework import status
+from rest_framework.exceptions import ValidationError
 
 from .models import LogFile, NginxLog
 
@@ -109,13 +109,33 @@ class Statistics(generics.ListAPIView):
         id = self.kwargs['id']
         key = self.request.query_params.get("key")
         value = self.request.query_params.get("value")
+        start_date = self.request.query_params.get("start_date")
+        end_date = self.request.query_params.get("end_date")
+
         if key is not None and value is not None:
             kwargs = {
                 'log_file_id': id,
                 '{0}'.format(key): '{0}'.format(value),
             }
             queryset = queryset.filter(**kwargs)
+
         else:
             queryset = queryset.filter(log_file_id=id)
 
+        if start_date is not None:
+            try:
+                start_date = datetime.datetime.strptime(start_date, '%Y-%m-%dT%H:%M:%S')
+            except:
+                raise ValidationError
+            queryset = queryset.filter(date_time__gte=start_date)
+
+        if end_date is not None:
+            try:
+                end_date = datetime.datetime.strptime(end_date, '%Y-%m-%dT%H:%M:%S')
+            except:
+                raise ValidationError
+            queryset = queryset.filter(date_time__lte=end_date)
+
         return queryset
+
+    
