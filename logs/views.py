@@ -11,7 +11,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser
 from rest_framework import generics
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import ValidationError, NotFound
 
 from .models import LogFile, NginxLog
 
@@ -31,8 +31,13 @@ def parser(filepath, log_file):
         regex = re.compile(r'^(\S+) - (\S+) \[(.*?)\] "(\S+) (\S+) (\S+)" (\S+) (\S+) (\S+) ([\Ss ]+)')
 
         # Iterate over the lines in the file
+        line_count = 0
         for line in f:
 
+            line_count += 1 
+
+            if line_count <= log_file.head:
+                continue
             # Match the line against the regular expression
             match = regex.match(line)
 
@@ -68,6 +73,9 @@ def parser(filepath, log_file):
                     user_agent = user_agent,
                     log_file=log_file
                 )
+
+        log_file.head = line_count
+        log_file.save()
     
     return HttpResponse('Done!')
 
@@ -98,8 +106,37 @@ class FileUploadView(APIView):
             return Response(data)
         except Exception as e:
             logging.exception(e)
-            return Response({'message': 'Uploading Faild.'})
+            return Response({'message': 'Uploading Failed.'})
         
+    def put(self, request, pk):
+        # Get the file from the request.
+        file = request.FILES['file']
+        try:
+            log_file = LogFile.objects.get(id=pk)
+        except:
+            raise NotFound
+        
+        try:
+            old_file_path = BASE_DIR + '/media/' + log_file.file.name
+
+            log_file.name = uuid.uuid4().hex
+            log_file.original_name = file.name
+            log_file.file = File(file)
+            log_file.size=file.size
+            log_file.save()
+
+            remove_old_file(old_file_path)
+
+            # Define the full file path
+            filepath = BASE_DIR + '/media/' + log_file.file.name
+
+            parser(filepath, log_file)
+            data = LogFileSerializer(log_file).data
+            return Response(data)
+        except Exception as e:
+            logging.exception(e)
+            return Response({'message': 'Updating Failed.'})
+
 
 class Statistics(generics.ListAPIView):
     serializer_class = NginxLogSerializer
@@ -138,4 +175,9 @@ class Statistics(generics.ListAPIView):
 
         return queryset
 
-    
+
+def remove_old_file(filepath):
+    if os.path.exists(filepath):
+        os.remove(filepath)
+    else:
+        logging.exception("The file does not exist")

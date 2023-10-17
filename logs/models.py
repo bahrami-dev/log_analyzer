@@ -7,6 +7,7 @@ class LogFile(models.Model):
     file = models.FileField(upload_to="logs")
     size = models.BigIntegerField()
     upload_date = models.DateTimeField(auto_now_add=True)
+    head = models.IntegerField(default=0)
 
 class NginxLog(models.Model):
     ip_address = models.CharField(max_length=32)
