@@ -108,6 +108,11 @@ class FileUploadView(APIView):
             logging.exception(e)
             return Response({'message': 'Uploading Failed.'})
         
+
+class FileUpdateView(APIView):
+    parser_classes = (MultiPartParser,)
+    serializer_class = LogFileSerializer
+    
     def put(self, request, pk):
         # Get the file from the request.
         file = request.FILES['file']
